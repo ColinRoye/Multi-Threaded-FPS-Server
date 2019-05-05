@@ -56,7 +56,8 @@ int getPort(int argc, char *argv[]){
           switch(i){
               case 'p': port = (int)atol(optarg);
                         break;
-              default: printf("USAGE default\n");
+              default: fprintf(stderr, "ERROR: invalid option\n");
+                        exit(1);
                         break;
           }
       if (port == -1 || port == 0) {
