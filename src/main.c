@@ -5,10 +5,15 @@
 #include "player.h"
 #include "debug.h"
 #include "server.h"
+#include "server_init.h"
+
+#include "csapp.h"
+
+
+extern char *template_file;
+extern char *port;
 
 static void terminate(int status);
-static int getPort(int argc, char* argv[]);
-
 static char *default_maze[] = {
   "******************************",
   "***** %%%%%%%%% &&&&&&&&&&& **",
@@ -26,46 +31,46 @@ CLIENT_REGISTRY *client_registry;
 int main(int argc, char* argv[]){
     // Option processing should be performed here.
     // Option '-p <port>' is required in order to specify the port number
-    int port = getPort(argc, argv);
-    printf("port: %d", port);
-    exit(0);
     // on which the server should listen.
-
+    getArgs(argc, argv);
+    debug("port: %s", port);
+    debug("template_file: %s", template_file);
     // Perform required initializations of the client_registry,
-    // maze, and player modules.
     client_registry = creg_init();
-    maze_init(default_maze);
+    // maze, and player modules.
+    if(template_file != NULL){
+          maze_init(process_template(template_file));
+    }else{
+          maze_init(default_maze);
+   }
     player_init();
+
     debug_show_maze = 1;  // Show the maze after each packet.
-    //test2
+
     // TODO: Set up the server socket and enter a loop to accept connections
     // on this socket.  For each connection, a thread should be started to
     // run function mzw_client_service().  In addition, you should install
     // a SIGHUP handler, so that receipt of SIGHUP will perform a clean
-    // shutdown of the server.
+    // shutdown of the server.'
+    int listenfd, *connfdp;
+    socklen_t clientlen = sizeof(struct sockaddr_in);
+    struct sockaddr_in clientaddr;
+    pthread_t tid;
+    listenfd = Open_listenfd(port);
+    debug("listenfd: %d", listenfd);
 
-    fprintf(stderr, "You have to finish implementing main() "
-	    "before the MazeWar server will function.\n");
+    while(1){
+          clientlen = sizeof(struct sockaddr_storage);
+          connfdp = Malloc(sizeof(int));
+          *connfdp = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+          pthread_create(&tid, NULL, mzw_client_service, connfdp);
+   }
+
+
 
     terminate(EXIT_FAILURE);
 }
-int getPort(int argc, char *argv[]){
-      int port = -1;
-      int i;
-      while((i = getopt(argc, argv, ":p:")) != -1)
-          switch(i){
-              case 'p': port = (int)atol(optarg);
-                        break;
-              default: fprintf(stderr, "ERROR: invalid option\n");
-                        exit(1);
-                        break;
-          }
-      if (port == -1 || port == 0) {
-         fprintf( stderr, "ERROR: Port not sepcified or invalid port\n");
-         exit(1);
-      }
-      return port;
-}
+
 /*
  * Function called to cleanly shut down the server.
  */
