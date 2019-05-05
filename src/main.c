@@ -1,5 +1,5 @@
 #include <stdlib.h>
-
+#include <getopt.h>
 #include "client_registry.h"
 #include "maze.h"
 #include "player.h"
@@ -7,6 +7,7 @@
 #include "server.h"
 
 static void terminate(int status);
+static int getPort(int argc, char* argv[]);
 
 static char *default_maze[] = {
   "******************************",
@@ -25,6 +26,9 @@ CLIENT_REGISTRY *client_registry;
 int main(int argc, char* argv[]){
     // Option processing should be performed here.
     // Option '-p <port>' is required in order to specify the port number
+    int port = getPort(argc, argv);
+    printf("port: %d", port);
+    exit(0);
     // on which the server should listen.
 
     // Perform required initializations of the client_registry,
@@ -45,7 +49,22 @@ int main(int argc, char* argv[]){
 
     terminate(EXIT_FAILURE);
 }
-
+int getPort(int argc, char *argv[]){
+      int port = -1;
+      int i;
+      while((i = getopt(argc, argv, ":p:")) != -1)
+          switch(i){
+              case 'p': port = (int)atol(optarg);
+                        break;
+              default: printf("USAGE default\n");
+                        break;
+          }
+      if (port == -1 || port == 0) {
+         fprintf( stderr, "ERROR: Port not sepcified or invalid port\n");
+         exit(1);
+      }
+      return port;
+}
 /*
  * Function called to cleanly shut down the server.
  */
@@ -53,7 +72,7 @@ void terminate(int status) {
     // Shutdown all client connections.
     // This will trigger the eventual termination of service threads.
     creg_shutdown_all(client_registry);
-    
+
     debug("Waiting for service threads to terminate...");
     creg_wait_for_empty(client_registry);
     debug("All service threads terminated.");
