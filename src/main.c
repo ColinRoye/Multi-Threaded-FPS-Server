@@ -52,6 +52,16 @@ int main(int argc, char* argv[]){
     // run function mzw_client_service().  In addition, you should install
     // a SIGHUP handler, so that receipt of SIGHUP will perform a clean
     // shutdown of the server.'
+    struct sigaction action;
+    memset (&action, 0, sizeof (action));
+
+
+    Signal(SIGHUP, terminate);
+
+
+
+
+
     int listenfd, *connfdp;
     socklen_t clientlen = sizeof(struct sockaddr_in);
     struct sockaddr_in clientaddr;
