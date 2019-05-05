@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
     maze_init(default_maze);
     player_init();
     debug_show_maze = 1;  // Show the maze after each packet.
-    //test
+    //test2
     // TODO: Set up the server socket and enter a loop to accept connections
     // on this socket.  For each connection, a thread should be started to
     // run function mzw_client_service().  In addition, you should install
