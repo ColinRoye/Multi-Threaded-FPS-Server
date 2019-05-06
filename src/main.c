@@ -13,6 +13,7 @@
 extern char *template_file;
 extern char *port;
 
+static void nop();
 static void terminate(int status);
 static char *default_maze[] = {
   "******************************",
@@ -57,6 +58,7 @@ int main(int argc, char* argv[]){
 
 
     Signal(SIGHUP, terminate);
+    Signal(SIGPIPE, nop);
 
 
 
@@ -80,7 +82,9 @@ int main(int argc, char* argv[]){
 
     terminate(EXIT_FAILURE);
 }
+void nop(){
 
+}
 /*
  * Function called to cleanly shut down the server.
  */

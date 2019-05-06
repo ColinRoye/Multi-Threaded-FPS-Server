@@ -63,15 +63,15 @@ char** process_template(char* tf){
       }
 
       fseek(file, 0, SEEK_SET);
-      in = malloc(sizeof(char*) * row);
+      in = malloc(sizeof(char*) * (row+1));
       for(int i = 0; i < row; i++){
             in[i] = malloc(sizeof(char) * col);
-            for(int j = 0; j < col; j++){
-                  if((c = fgetc(file)) != '\n'){
+            for(int j = 0; j < col+1; j++){
+                  if((c = fgetc(file)) != '\n' && c != -1){
                         in[i][j] = c;
                   }
-                  printf("c = %d\n", c);
             }
       }
+      in[row] = NULL;
       return in;
 }

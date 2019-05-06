@@ -36,7 +36,7 @@
  *   REFRESH: Ask for the view to be refreshed
  *   SEND:    Send a chat message
  *
- * 
+ *
  * Server-to-client responses:
  *   READY:   Sent in response to a successful login
  *   INUSE:   Avatar/UID is in use -- login unsuccessful
@@ -67,7 +67,7 @@ typedef enum {
  * Structure of a packet.
  */
 typedef struct mzw_packet {
-    uint8_t type;		   // Type of the packet
+    uint8_t type;		           // Type of the packet
     int8_t param1;                 // Generic parameter field 1
     int8_t param2;                 // Generic parameter field 2
     int8_t param3;                 // Generic parameter field 3
