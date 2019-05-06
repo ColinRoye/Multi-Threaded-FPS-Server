@@ -1,6 +1,8 @@
 
 #include <stdlib.h>
 #include <getopt.h>
+#include <stdio.h>
+
 #include "client_registry.h"
 #include "maze.h"
 #include "player.h"
@@ -13,23 +15,63 @@ char* template_file;
 
 void getArgs(int argc, char *argv[]){
       int i;
-      while((i = getopt(argc, argv, ":p:")) != -1){
+      int port_flag = 1;
+      while((i = getopt(argc, argv, ":p:t:")) != -1){
           switch(i){
-            case 'p': port = Malloc(sizeof(optarg));
-                  memcpy(port, optarg, strlen(optarg)+1);
+            case 'p':
+                  port = malloc(strlen(optarg));
+                  memcpy(port, optarg, strlen(optarg));
+                  port_flag = 0;
                   break;
-            case 't': template_file = Malloc(sizeof(optarg));
-                  memcpy(template_file, optarg, strlen(optarg)+1);
+            case 't':
+                  template_file = malloc(strlen(optarg));
+                  memcpy(template_file, optarg, strlen(optarg));
                   break;
             default: fprintf(stderr, "ERROR: invalid option\n");
                   exit(1);
                   break;
           }
     }
+   if(port_flag){
+
+       exit(1);
+
+   }
 
 
 }
-char** process_template(char* file){
-      //TODO
-      return NULL;
+char** process_template(char* tf){
+      FILE *file;
+      file = fopen(tf, "r");
+      fseek(file, 0, SEEK_SET);
+      int row = 0;
+      int col = 0;
+      char** in;
+      char c_prev;
+      char c;
+      while((c = fgetc(file)) != EOF){
+            if(c == '\n'){
+                  row++;
+            }
+            if(row == 0) {
+                  col++;
+            }
+            c_prev = c;
+      }
+      if(c_prev != '\n'){
+            row++;
+      }
+
+      fseek(file, 0, SEEK_SET);
+      in = malloc(sizeof(char*) * row);
+      for(int i = 0; i < row; i++){
+            in[i] = malloc(sizeof(char) * col);
+            for(int j = 0; j < col; j++){
+                  if((c = fgetc(file)) != '\n'){
+                        in[i][j] = c;
+                  }
+                  printf("c = %d\n", c);
+            }
+      }
+      return in;
 }
