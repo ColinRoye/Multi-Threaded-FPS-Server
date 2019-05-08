@@ -10,8 +10,8 @@
 #include "csapp.h"
 
 #define PROTO_ERR -1
-
-
+enum{move, turn, fire, refresh, send};
+extern int getType(MZW_PACKET pkt);
 extern void *mzw_client_service(void *arg);
 int debug_show_maze;
 CLIENT_REGISTRY *client_registry;
@@ -57,7 +57,41 @@ void *mzw_client_service(void *arg){
 			continue;
 		}
 
-
+		switch(getType(in)){
+			case move:
+				player_move(player, in->param1)
+				break;
+			case turn:
+				player_rotate(player, in->param1);
+				break;
+			case fire:
+				player_fire_lazar(player);
+				break;
+			case refresh:
+				player_invalidate_view(player);
+				player_update_view(player);
+				break;
+			case send:
+				player_send_chat(player, *data, in->size);
+				break;
+			default:
+				debug("type not recognized");
+		}
 
 	}
+}
+int getType(MZW_PACKET pkt){
+	if(pkt->type == MOVE)
+		return move;
+	if(pkt->type == TURN)
+		return turn;
+	if(pkt->type == FIRE)
+		return fire;
+	if(pkt->type == REFRESH)
+		return refresh;
+	if(pkt->type == SEND)
+		return send;
+
+	return -1;
+
 }
