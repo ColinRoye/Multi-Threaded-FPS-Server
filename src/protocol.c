@@ -33,13 +33,7 @@ void host_byte_order(MZW_PACKET* pkt){
 void setTimeStamp(MZW_PACKET* pkt){
 
 }
-size_t rio_readn_safe(int fd, void *ptr, size_t nbytes){
-    ssize_t n;
 
-    if ((n = rio_readn(fd, ptr, nbytes)) < 0)
-	return 0;
-    return n;
-}
 int rio_writen_safe(int fd, void *usrbuf, size_t n){
     if (rio_writen(fd, usrbuf, n) != n)
 	return 0;
@@ -60,7 +54,7 @@ int proto_send_packet(int fd, MZW_PACKET *pkt, void *data){
 }
 int proto_recv_packet(int fd, MZW_PACKET *pkt, void **datap){
 	int n;
-	if(!(n = rio_readn_safe(fd, pkt, sizeof(MZW_PACKET)))){
+	if(!(n = read(fd, pkt, sizeof(MZW_PACKET)))){
 		return 1;
 	}
 	debug("recv %d", pkt->size);
@@ -70,7 +64,7 @@ int proto_recv_packet(int fd, MZW_PACKET *pkt, void **datap){
 
 	if(pkt->size > 0){
 		*datap = Malloc(pkt->size);
-		if(!(n = rio_readn_safe(fd, *datap, pkt->size))){
+		if(!(n = read(fd, *datap, pkt->size))){
 			free(*datap);
 			return 1;
 		}
