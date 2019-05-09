@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
 
 
     Signal(SIGHUP, terminate);
-    Signal(SIGPIPE, nop);
+   // Signal(SIGPIPE, nop);
 
 
 
