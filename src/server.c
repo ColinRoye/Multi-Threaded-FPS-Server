@@ -29,7 +29,7 @@ void laser_handler(){
 
 void *mzw_client_service(void *arg){
 	int fd = *((int*)arg);
-	Signal(SIGUSR1, laser_handler);
+	//Signal(SIGUSR1, laser_handler);
 
 	free(arg);
 	pthread_detach(pthread_self());
@@ -45,23 +45,22 @@ void *mzw_client_service(void *arg){
 	while(1){
 		if(loggedIn){
 			player_check_for_laser_hit(player);
-			debug("MADE IT SIGNAL HANDLER");
 			hit = 0;
 		}
 		//IF ERR SHUTDOWN
 		if(proto_recv_packet(fd, in, &payload) < 0 && errno != EINTR){
-			debug("err");
+			//////debug("err");
 			free(in);
 			//free(out);
 			creg_unregister(client_registry, fd);
 			shutdown(fd,SHUT_RD);
 			return NULL;
 		}
-		debug("sent %d", in->size);
+		//////debug("sent %d", in->size);
 
-		//debug("name: %s", (char*)body);
+		////////debug("name: %s", (char*)body);
 		if(!loggedIn){
-			debug("not logged in");
+			//////debug("not logged in");
 
 			if(in->type != MZW_LOGIN_PKT){
 				continue;
@@ -76,16 +75,16 @@ void *mzw_client_service(void *arg){
 				MZW_PACKET out = {MZW_INUSE_PKT, 0, 0, 0, 0, 0, 0};
 				proto_send_packet(fd,&out,NULL);
 			}
-			debug("loggedin");
+			//////debug("loggedin");
 			continue;
 
 		}
 
-		debug("logged in ? %d", loggedIn);
+		//////debug("logged in ? %d", loggedIn);
 
 		if(in->type == MZW_LOGIN_PKT){
 			//loggedIn = 0;
-			debug("correct type");
+			//////debug("correct type");
 			continue;
 		}
 
@@ -107,7 +106,7 @@ void *mzw_client_service(void *arg){
 				player_send_chat(player, payload, in->size);
 				break;
 			default:
-				debug("type not recognized %d", in->type);
+			debug("type not recognized %d", in->type);
 
 		}
 

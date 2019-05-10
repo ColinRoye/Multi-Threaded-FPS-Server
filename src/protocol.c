@@ -15,11 +15,7 @@ extern int proto_recv_packet(int fd, MZW_PACKET *pkt, void **data);
 
 
 
-int rio_writen_safe(int fd, void *usrbuf, size_t n){
-    if (rio_writen(fd, usrbuf, n) != n)
-	return 0;
-    return 1;
-}
+
 int proto_send_packet(int fd, MZW_PACKET *pkt, void *data){
 	size_t packetLen = sizeof(MZW_PACKET);
 	uint32_t len = pkt->size;
@@ -29,10 +25,10 @@ int proto_send_packet(int fd, MZW_PACKET *pkt, void *data){
 	pkt->timestamp_sec = htonl(pkt->timestamp_sec);
 	pkt->timestamp_nsec = htonl(pkt->timestamp_nsec);
 
-	if (write(fd, pkt, packetLen) != packetLen){
+	if (rio_writen(fd, pkt, packetLen) != packetLen){
 		return -1;
 	}
-	if (len != 0 && write(fd, data, len) != len){
+	if (len != 0 && rio_writen(fd, data, len) != len){
 		return -1;
 	}
       return 0;
@@ -40,8 +36,8 @@ int proto_send_packet(int fd, MZW_PACKET *pkt, void *data){
 }
 int proto_recv_packet(int fd, MZW_PACKET *pkt, void **datap){
 
-	int test;
-	if((test = rio_readn(fd, pkt, sizeof(MZW_PACKET))) != sizeof(MZW_PACKET)){
+	int n;
+	if((n = rio_readn(fd, pkt, sizeof(MZW_PACKET))) != sizeof(MZW_PACKET)){
 
 			return -1;
 
@@ -54,7 +50,7 @@ int proto_recv_packet(int fd, MZW_PACKET *pkt, void **datap){
 
 	void* x = calloc(sizeof(char), pkt->size);
 
-	if (pkt->size > 0 && (test = rio_readn(fd, x, pkt->size)) != pkt->size){
+	if (pkt->size > 0 && (n = rio_readn(fd, x, pkt->size)) != pkt->size){
 
 			return -1;
 
