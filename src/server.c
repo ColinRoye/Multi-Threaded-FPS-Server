@@ -27,6 +27,8 @@ void *mzw_client_service(void *arg){
 	pthread_detach(pthread_self());
 	//DETATCHED
 	creg_register(client_registry, fd);
+	pthread_detach(pthread_self());
+
 	void* player;
 	void* payload;
 	MZW_PACKET * in = malloc(sizeof(MZW_PACKET));
@@ -56,14 +58,14 @@ void *mzw_client_service(void *arg){
 				loggedIn = 1;
 				MZW_PACKET out = {MZW_READY_PKT, 0, 0, 0, 0, 0, 0};
 				if(proto_send_packet(fd,&out,NULL) != 0){
-
+					debug("DIE");
 				}
 				player_reset(player);
 
 			}else{
 				MZW_PACKET out = {MZW_INUSE_PKT, 0, 0, 0, 0, 0, 0};
 				if(proto_send_packet(fd,&out,NULL) != 0){
-					
+					debug("DIE");
 				};
 			}
 			debug("loggedin");
@@ -93,11 +95,12 @@ void *mzw_client_service(void *arg){
 				player_invalidate_view(player);
 				player_update_view(player);
 				break;
-			case MZW_CHAT_PKT: debug("MZW_CHAT_PKT:");
+			case MZW_SEND_PKT: debug("MZW_CHAT_PKT:");
 				player_send_chat(player, payload, in->size);
 				break;
 			default:
 				debug("type not recognized %d", in->type);
+
 		}
 
 	}
