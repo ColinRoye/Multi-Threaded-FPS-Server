@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "client_registry.h"
 #include "maze.h"
@@ -21,8 +22,15 @@ extern void *mzw_client_service(void *arg);
 int debug_show_maze;
 CLIENT_REGISTRY *client_registry;
 
+int hit;
+void laser_handler(){
+	hit = 1;
+}
+
 void *mzw_client_service(void *arg){
 	int fd = *((int*)arg);
+	Signal(SIGUSR1, laser_handler);
+
 	free(arg);
 	pthread_detach(pthread_self());
 	//DETATCHED
@@ -35,9 +43,13 @@ void *mzw_client_service(void *arg){
 	//MZW_PACKET out;// = malloc(sizeof(MZW_PACKET));
 	int loggedIn = 0;
 	while(1){
-
+		if(loggedIn){
+			player_check_for_laser_hit(player);
+			debug("MADE IT SIGNAL HANDLER");
+			hit = 0;
+		}
 		//IF ERR SHUTDOWN
-		if(proto_recv_packet(fd, in, &payload) < 0){
+		if(proto_recv_packet(fd, in, &payload) < 0 && errno != EINTR){
 			debug("err");
 			free(in);
 			//free(out);
@@ -57,16 +69,12 @@ void *mzw_client_service(void *arg){
 			if((player = player_login(fd, in->param1, (char*)payload)) != NULL){
 				loggedIn = 1;
 				MZW_PACKET out = {MZW_READY_PKT, 0, 0, 0, 0, 0, 0};
-				if(proto_send_packet(fd,&out,NULL) != 0){
-					debug("DIE");
-				}
+				proto_send_packet(fd,&out,NULL);
 				player_reset(player);
 
 			}else{
 				MZW_PACKET out = {MZW_INUSE_PKT, 0, 0, 0, 0, 0, 0};
-				if(proto_send_packet(fd,&out,NULL) != 0){
-					debug("DIE");
-				};
+				proto_send_packet(fd,&out,NULL);
 			}
 			debug("loggedin");
 			continue;
