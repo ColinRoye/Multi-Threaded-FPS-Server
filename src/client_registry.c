@@ -49,7 +49,14 @@ void creg_register(CLIENT_REGISTRY *cr, int fd){
 
 void creg_unregister(CLIENT_REGISTRY *cr, int fd){
 	pthread_mutex_lock(&cr->mutex);
-	cr->clients--;
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		if(fd == cr->fds[i] && fd >= 0){
+			cr->clients--;
+			cr->fds[i] =  -1;
+			shutdown(fd, SHUT_RD);
+			break;
+		}
+	}
 	pthread_mutex_unlock(&cr->mutex);
 }
 

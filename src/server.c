@@ -49,19 +49,12 @@ void *mzw_client_service(void *arg){
 		}
 		//IF ERR SHUTDOWN
 		if(proto_recv_packet(fd, in, &payload) < 0 && errno != EINTR){
-			//////debug("err");
 			free(in);
-			//free(out);
 			creg_unregister(client_registry, fd);
 			shutdown(fd,SHUT_RD);
 			return NULL;
 		}
-		//////debug("sent %d", in->size);
-
-		////////debug("name: %s", (char*)body);
 		if(!loggedIn){
-			//////debug("not logged in");
-
 			if(in->type != MZW_LOGIN_PKT){
 				continue;
 			}
@@ -75,19 +68,11 @@ void *mzw_client_service(void *arg){
 				MZW_PACKET out = {MZW_INUSE_PKT, 0, 0, 0, 0, 0, 0};
 				proto_send_packet(fd,&out,NULL);
 			}
-			//////debug("loggedin");
 			continue;
-
 		}
-
-		//////debug("logged in ? %d", loggedIn);
-
 		if(in->type == MZW_LOGIN_PKT){
-			//loggedIn = 0;
-			//////debug("correct type");
 			continue;
 		}
-
 		switch(in->type){
 			case MZW_MOVE_PKT: debug("MZW_MOVE_PKT:");
 				player_move(player, in->param1);
@@ -107,7 +92,6 @@ void *mzw_client_service(void *arg){
 				break;
 			default:
 			debug("type not recognized %d", in->type);
-
 		}
 
 	}

@@ -753,6 +753,9 @@ ssize_t rio_readn(int fd, void *usrbuf, size_t n)
     char *bufp = usrbuf;
 
     while (nleft > 0) {
+      if(errno == EOF){
+            return -1;
+      }
 	if ((nread = read(fd, bufp, nleft)) < 0) {
 	    if (errno == EINTR) /* Interrupted by sig handler return */
 		return 0;// nread = 0;      /* and call read() again */
@@ -780,6 +783,9 @@ ssize_t rio_writen(int fd, void *usrbuf, size_t n)
 
     while (nleft > 0) {
 	if ((nwritten = write(fd, bufp, nleft)) <= 0) {
+            if(errno == EOF){
+                  return -1;
+            }
 	    if (errno == EINTR)  /* Interrupted by sig handler return */
 		nwritten = 0;    /* and call write() again */
 	    else

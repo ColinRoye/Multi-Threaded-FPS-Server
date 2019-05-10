@@ -11,11 +11,6 @@
 extern int proto_send_packet(int fd, MZW_PACKET *pkt, void *data);
 extern int proto_recv_packet(int fd, MZW_PACKET *pkt, void **data);
 
-
-
-
-
-
 int proto_send_packet(int fd, MZW_PACKET *pkt, void *data){
 	size_t packetLen = sizeof(MZW_PACKET);
 	uint32_t len = pkt->size;
