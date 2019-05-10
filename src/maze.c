@@ -158,11 +158,11 @@ int maze_move(int row, int col, int dir){
 	if(dir == NORTH)
 		return maze_set_player(row-1, col);
 	if(dir == SOUTH)
-		return maze_set_player(row, col-1);
-	if(dir == EAST)
 		return maze_set_player(row+1, col);
-	if(dir == WEST)
+	if(dir == EAST)
 		return maze_set_player(row, col+1);
+	if(dir == WEST)
+		return maze_set_player(row, col-1);
 
 	return -1;
 
@@ -189,11 +189,11 @@ OBJECT maze_find_target(int row, int col, DIRECTION dir){
 		if(dir == NORTH)
 			row = row-1;
 		if(dir == SOUTH)
-		 	col = col-1;
+		 	row = row+1;
 		if(dir == EAST)
-			row = row+1;
-		if(dir == WEST)
 			col = col+1;
+		if(dir == WEST)
+			col = col-1;
 		if((row >= 0 && row < ROWS) && (col >= 0 && col < COLS) && IS_AVATAR(maze[row][col])){
 			pthread_mutex_unlock(&lock);
 			return maze[row][col];
@@ -222,8 +222,62 @@ OBJECT maze_find_target(int row, int col, DIRECTION dir){
 * maximum depth, as described above.  Entries of the view at depths
 * greater than the returned depth should be regarded as invalid.
 */
-int maze_get_view(VIEW *view, int row, int col, DIRECTION gaze, int depth){
 
+// #define VIEW_DEPTH 16    // Maximum view depth
+//
+// #define LEFT_WALL 0
+// #define CORRIDOR 1
+// #define RIGHT_WALL 2
+int isValid(int row, int col){
+	if(row >= 0 && row < ROWS) && (col >= 0 && col < COLS)
+		return 1;
+	return 0;
+}
+int maze_get_view(VIEW *view, int row, int col, DIRECTION gaze, int depth){
+	int i = 0;
+	for(i = 0; i < depth && depth < VIEW_DEPTH; i++){
+		if(gaze == NORTH){
+			if(isValid(row, col))
+				view[i][CORRIDOR] = maze[row][col]
+			if(isValid(row, col-1))
+				view[i][LEFT_WALL] = maze[row][col-1]
+			if(isValid(row, col+1))
+				view[i][RIGHT_WALL] = maze[row][col+1]
+			row = row-1;
+		}
+		if(gaze == SOUTH){
+			if(isValid(row, col))
+				view[i][CORRIDOR] = maze[row][col]
+			if(isValid(row, col+1))
+				view[i][LEFT_WALL] = maze[row][col+1]
+			if(isValid(row, col-1))
+				view[i][RIGHT_WALL] = maze[row][col-1]
+			row = row+1;
+		}
+		if(gaze == EAST){
+			if(isValid(row, col))
+				view[i][CORRIDOR] = maze[row][col]
+			if(isValid(row, col+1))
+				view[i][LEFT_WALL] = maze[row-1][col]
+			if(isValid(row, col-1))
+				view[i][RIGHT_WALL] = maze[row+1][col]
+			col = col+1;
+		}
+		if(gaze == WEST){
+			if(isValid(row, col))
+				view[i][CORRIDOR] = maze[row][col]
+			if(isValid(row, col-1))
+				view[i][LEFT_WALL] = maze[row+1][col]
+			if(isValid(row, col+1))
+				view[i][RIGHT_WALL] = maze[row-1][col]
+			col = col-1;
+		}
+		if(IS_WALL(view[i][CORRIDOR])){
+			break;
+		}
+
+	}
+	return i;
 }
 
 /*
