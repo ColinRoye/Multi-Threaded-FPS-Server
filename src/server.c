@@ -50,6 +50,7 @@ void *mzw_client_service(void *arg){
 		//IF ERR SHUTDOWN
 		if(proto_recv_packet(fd, in, &payload) < 0 && errno != EINTR){
 			free(in);
+			player_logout(player);
 			creg_unregister(client_registry, fd);
 			shutdown(fd,SHUT_RD);
 			return NULL;

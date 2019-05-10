@@ -51,9 +51,11 @@ void creg_unregister(CLIENT_REGISTRY *cr, int fd){
 	pthread_mutex_lock(&cr->mutex);
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(fd == cr->fds[i] && fd >= 0){
+			debug("UNREGISTER");
+			shutdown(fd, SHUT_RD);
+
 			cr->clients--;
 			cr->fds[i] =  -1;
-			shutdown(fd, SHUT_RD);
 			break;
 		}
 	}
