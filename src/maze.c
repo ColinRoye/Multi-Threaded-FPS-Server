@@ -1,6 +1,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <getopt.h>
 #include "client_registry.h"
 #include "maze.h"
@@ -8,6 +9,7 @@
 #include "debug.h"
 #include "server.h"
 #include "server_init.h"
+#include <ctype.h>
 #include <pthread.h>
 
 
@@ -38,18 +40,21 @@ void maze_init(char **template){
 		printf("temp: %s", *temp);
 	}
 
-	if ((maze  = malloc(ROWS)) == NULL){
+	if ((maze  = malloc(ROWS*sizeof(char*))) == NULL){
 		errno = ENOMEM;
 		return;
 	}
 	int i;
-	for(i = 0; i < ROWS; i++){
+	temp = template;
+	for(i = 0; (*temp) != NULL ;(temp)++, i++){
 		if ((maze[i]  = malloc(COLS)) == NULL){
 			errno = ENOMEM;
 			return;
 		}
-		strcpy((char*)maze[i],  (char*)template[i]);
+		strcpy((char*)maze[i], (char*)template[i]);
 	}
+	debug("\n\n\n");
+
 }
 
 /*
@@ -57,7 +62,7 @@ void maze_init(char **template){
 * This should be called when the maze is no longer required.
 */
 void maze_fini(){
-	debug("MADE IT TO: maze_fini");
+	//debug("MADE IT TO: maze_fini");
 	pthread_mutex_destroy(&mutex);
 	for(int i = 0; i < ROWS; i++){
 		free(maze[i]);
@@ -71,7 +76,7 @@ void maze_fini(){
 * @return the number of rows of the maze.
 */
 int maze_get_rows(){
-	debug("MADE IT TO: maze_get_rows");
+	//debug("MADE IT TO: maze_get_rows");
 	return ROWS;
 }
 
@@ -85,9 +90,20 @@ int maze_get_cols(){
 	return COLS;
 }
 int isValid(int row, int col){
-	debug("MADE IT TO: isValid");
-	if((row >= 0 && row < ROWS) && (col >= 0 && col < COLS))
+	//debug("MADE IT TO: isValid");
+	if((row >= 0 && row < ROWS) && (col >= 0 && col < COLS)){
+		// debug("\nVALID SUCESS");
+		// debug("row %d", row);
+		// debug("ROWS %d", ROWS);
+		// debug("col %d", col);
+		// debug("COLS %d", COLS);
 		return 1;
+	}
+	// debug("\nVALID FAIL");
+	// debug("row %d", row);
+	// debug("ROWS %d", ROWS);
+	// debug("col %d", col);
+	// debug("COLS %d", COLS);
 	return 0;
 }
 /*
@@ -103,17 +119,17 @@ int isValid(int row, int col){
 * players will be updated.
 */
 int maze_set_player(OBJECT avatar, int row, int col){
-	debug("MADE IT TO: maze_set_player");
+	//debug("MADE IT TO: maze_set_player");
 	//fail if not EMPTY
 	pthread_mutex_lock(&mutex);
-	if(isValid(row,col) && !IS_EMPTY(maze[row][col])){
+	if(isValid(row,col) && IS_EMPTY(maze[row][col])){
+		maze[row][col] = avatar;
 		pthread_mutex_unlock(&mutex);
-		return -1;
+		return 0;
 		//*****Success update views of all players
 	}
-	maze[row][col] = avatar;
 	pthread_mutex_unlock(&mutex);
-	return 0;
+	return -1;
 
 	//maze[i][j] = avatar;
 }
@@ -133,19 +149,19 @@ int maze_set_player(OBJECT avatar, int row, int col){
 * of all players will be updated.
 */
 int maze_set_player_random(OBJECT avatar, int *rowp, int *colp){
-	debug("MADE IT TO: maze_set_player_random");
-	debug("ROWS: %d", ROWS);
-	debug("COLS: %d", COLS);
+	// debug("MADE IT TO: maze_set_player_random");
+	// debug("ROWS: %d", ROWS);
+	// debug("COLS: %d", COLS);
 	int MAX_ATTEMPTS = ROWS*COLS;
 	srand(time(NULL));
 	for(int i = 0; i < MAX_ATTEMPTS; i++){
 		//unsigned int seed = time(0);
 		int ind = (int)(((double)rand()/RAND_MAX) * (ROWS*COLS));
-		debug("\n\tind %d\n", ind);
+		//debug("\n\tind %d\n", ind);
 		int col = ind%COLS;
 	 	int row = (int)(ind-col)/COLS;
-		debug("row_rand: %d", row);
-		debug("col_rand: %d", col);
+		// debug("row_rand: %d", row);
+		// debug("col_rand: %d", col);
 		if(!maze_set_player(avatar, row, col)){
 			*rowp = row;
 			*colp = col;
@@ -165,7 +181,7 @@ int maze_set_player_random(OBJECT avatar, int *rowp, int *colp){
 * The views of all players are updated after the removal has been performed.
 */
 void maze_remove_player(OBJECT avatar, int row, int col){
-	debug("MADE IT TO: maze_remove_player");
+	//debug("MADE IT TO: maze_remove_player");
 
 	pthread_mutex_lock(&mutex);
 	maze[row][col] = EMPTY;
@@ -191,19 +207,47 @@ void maze_remove_player(OBJECT avatar, int row, int col){
 * If movement is successful, then the views of all players are updated.
 */
 int maze_move(int row, int col, int dir){
-	debug("MADE IT TO: maze_move");
+	//debug("MADE IT TO: maze_move");
+	pthread_mutex_lock(&mutex);
+
 	if(dir == NORTH){
-		return (isValid(row-1, col) && IS_EMPTY(maze[row-1][col]));
+		if(isValid(row-1, col) && IS_EMPTY(maze[row-1][col])){
+			maze[row-1][col] = maze[row][col];
+			maze[row][col] = EMPTY;
+			pthread_mutex_unlock(&mutex);
+
+			return 0;
+		}
 	}
 	if(dir == SOUTH){
-		return (isValid(row+1, col) && IS_EMPTY(maze[row+1][col]));
+		if(isValid(row+1, col) && IS_EMPTY(maze[row+1][col])){
+			maze[row+1][col] = maze[row][col];
+			maze[row][col] = EMPTY;
+			pthread_mutex_unlock(&mutex);
+
+			return 0;
+		}
 	}
 	if(dir == EAST){
-		return (isValid(row, col+1) && IS_EMPTY(maze[row][col+1]));
+		if(isValid(row, col+1) && IS_EMPTY(maze[row][col+1])){
+			maze[row][col+1] = maze[row][col];
+			maze[row][col] = EMPTY;
+			pthread_mutex_unlock(&mutex);
+
+			return 0;
+		}
 	}
 	if(dir == WEST){
-		return (isValid(row, col-1) && IS_EMPTY(maze[row][col-1]));
+		if(isValid(row, col-1) && IS_EMPTY(maze[row][col-1])){
+			maze[row][col-1] = maze[row][col];
+			maze[row][col] = EMPTY;
+			pthread_mutex_unlock(&mutex);
+
+			return 0;
+		}
 	}
+
+	pthread_mutex_unlock(&mutex);
 
 	return -1;
 
@@ -224,10 +268,10 @@ int maze_move(int row, int col, int dir){
 * or the search would go beyond the maze boundaries.
 */
 OBJECT maze_find_target(int row, int col, DIRECTION dir){
-	debug("MADE IT TO: maze_find_target");
+	//debug("MADE IT TO: maze_find_target");
 	pthread_mutex_lock(&mutex);
 
-	while(IS_EMPTY(maze[row][col]) && (row >= 0 && row < ROWS) && (col >= 0 && col < COLS)){
+	while(isValid(row,col) && IS_EMPTY(maze[row][col])){
 		if(dir == NORTH)
 			row = row-1;
 		if(dir == SOUTH)
@@ -236,7 +280,7 @@ OBJECT maze_find_target(int row, int col, DIRECTION dir){
 			col = col+1;
 		if(dir == WEST)
 			col = col-1;
-		if((row >= 0 && row < ROWS) && (col >= 0 && col < COLS) && IS_AVATAR(maze[row][col])){
+		if(isValid(row,col) && IS_AVATAR(maze[row][col])){
 			pthread_mutex_unlock(&mutex);
 			return maze[row][col];
 		}
@@ -270,12 +314,18 @@ OBJECT maze_find_target(int row, int col, DIRECTION dir){
 // #define LEFT_WALL 0
 // #define CORRIDOR 1
 // #define RIGHT_WALL 2
-
+// void show_maze2(){
+// 	for(int i = 0; i < ROWS; i++){
+// 		for(int j = 0; j < COLS; j++){
+// 			debug("%c", maze[i][j]);
+// 		}
+// 	}
 int maze_get_view(VIEW *view, int row, int col, DIRECTION gaze, int depth){
-	debug("MADE IT TO: maze_get_view");
-
+	//debug("MADE IT TO: maze_get_view");
+	//show_maze2();
 	int i = 0;
-	for(i = 0; i < depth && depth < VIEW_DEPTH; i++){
+	pthread_mutex_lock(&mutex);
+	for(i = 0; i < depth && i < VIEW_DEPTH; i++){
 		if(gaze == NORTH){
 			if(isValid(row, col))
 				(*view)[i][CORRIDOR] = maze[row][col];
@@ -312,11 +362,19 @@ int maze_get_view(VIEW *view, int row, int col, DIRECTION gaze, int depth){
 				(*view)[i][RIGHT_WALL] = maze[row-1][col];
 			col = col-1;
 		}
-		if(IS_WALL((*view)[i][CORRIDOR])){
-			break;
-		}
+		// if(IS_WALL((*view)[i][CORRIDOR])){
+		// 	break;
+		// }
 
 	}
+	for(int i = 0; i < ROWS; i++){
+		for(int j = 0; j < COLS; j++){
+			printf("%c", maze[i][j]);
+		}
+		printf("\n");
+	}
+	pthread_mutex_unlock(&mutex);
+
 	return i;
 }
 
@@ -334,5 +392,11 @@ void show_view(VIEW *view, int depth){
 * Print the maze on stderr, for debugging.
 */
 void show_maze(){
-
+	printf("\n");
+	for(int i = 0; i < ROWS; i++){
+		for(int j = 0; j < COLS; j++){
+			printf("%c", maze[i][j]);
+		}
+		printf("\n");
+	}
 }
