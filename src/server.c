@@ -35,7 +35,7 @@ void *mzw_client_service(void *arg){
 	pthread_detach(pthread_self());
 	//DETATCHED
 	creg_register(client_registry, fd);
-	pthread_detach(pthread_self());
+	
 
 	void* player;
 	void* payload;
